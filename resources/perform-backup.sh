@@ -4,10 +4,10 @@
 has_failed=false
 
 # Configure AWS CLI for Scaleway S3
-aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" --profile scaleway
-aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" --profile scaleway
-aws configure set region "$AWS_REGION" --profile scaleway  # Replace with your Scaleway region
-aws configure set output "json" --profile scaleway
+aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
+aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
+aws configure set region "$AWS_REGION" 
+aws configure set output "json" 
 
 # Set the BACKUP_CREATE_DATABASE_STATEMENT variable
 if [ "$BACKUP_CREATE_DATABASE_STATEMENT" = "true" ]; then
