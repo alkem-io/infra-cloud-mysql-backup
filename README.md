@@ -21,6 +21,7 @@ The below table lists all of the Environment Variables that are configurable for
 | AWS_BUCKET_NAME                  | **(Required for AWS Backend)** The name of the S3 bucket.                                                                                                                                                                                             |
 | AWS_BUCKET_BACKUP_PATH           | **(Required for AWS Backend)** Path the backup file should be saved to in S3. E.g. `/database/myblog/backups`. **Do not put a trailing / or specify the filename.**                                                                                   |
 | AWS_S3_ENDPOINT                  | **(Optional)** The S3-compatible storage endpoint (for MinIO/other cloud storage) bucket.                                                                                                                                                             |
+| AWS_REGION                       | **(Optional)** The AWS region where the S3 bucket is created                                                                   |
 **                                                                                  |
 | TARGET_DATABASE_HOST             | **(Required)** Hostname or IP address of the MySQL Host.                                                                                                                                                                                              |
 | TARGET_DATABASE_PORT             | **(Optional)** Port MySQL is listening on (Default: 3306).                                                                                                                                                                                            |
@@ -71,7 +72,7 @@ An IAM User should be created, with API Credentials. An example Policy to attach
 
 ### S3 - Example Kubernetes Cronjob
 
-An example of how to schedule this container in Kubernetes as a cronjob is below. This would configure a database backup to run each day at 01:00am. The AWS Secret Access Key, Target Database Password and Slack Webhook URL are stored in secrets.
+An example of how to schedule this container in Kubernetes as a cronjob is below. This would configure a database backup to run each day at 01:00am. The AWS Secret Access Key, Target Database Password are stored in secrets.
 
 ```
 apiVersion: v1
@@ -82,7 +83,6 @@ type: Opaque
 data:
   aws_secret_access_key: <AWS Secret Access Key>
   database_password: <Your Database Password>
-  slack_webhook_url: <Your Slack WebHook URL>
 ---
 apiVersion: batch/v1beta1
 kind: CronJob
@@ -127,14 +127,5 @@ spec:
                      key: database_password
               - name: BACKUP_TIMESTAMP
                 value: "_%Y_%m_%d"
-              - name: SLACK_ENABLED
-                value: "<true/false>"
-              - name: SLACK_CHANNEL
-                value: "#chatops"
-              - name: SLACK_WEBHOOK_URL
-                valueFrom:
-                   secretKeyRef:
-                     name: my-database-backup
-                     key: slack_webhook_url
           restartPolicy: Never
 ```
