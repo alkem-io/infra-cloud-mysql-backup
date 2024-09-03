@@ -1,0 +1,52 @@
+# Set the base image to Postgres 12
+FROM postgres:12
+
+# Switch to root user to install packages
+USER root
+
+# Install Python3 and other required packages
+RUN apt-get update && \
+    apt-get install -y \
+    python3-pip \
+    python3-venv \
+    less \
+    mailcap \
+    curl \
+    gnupg \
+    gzip \
+    git \
+    golang-go && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create and activate a virtual environment
+RUN python3 -m venv /opt/venv
+
+# Install Python packages inside the virtual environment
+RUN /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install awscli s3cmd python-magic awscli-plugin-endpoint
+
+# Set the environment variable to use the virtual environment Python and Pip
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
+    rm kubectl
+
+# Install FiloSottile/age for encryption, adjusting for the go environment
+RUN git clone https://github.com/FiloSottile/age.git /tmp/age && \
+    cd /tmp/age && \
+    git checkout $AGE_VERSION && \
+    go build -o /usr/local/bin/age ./cmd/age && \
+    rm -rf /tmp/age
+
+# Copy Scaleway configuration files from build context to the container
+COPY ./scaleway/config /root/.aws/config
+
+# Assume you have a backup script that uses mysqldump, pg_dump, awscli, etc.
+COPY resources/perform-backup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/perform-backup.sh
+
+# Set the entrypoint to execute the backup script
+CMD ["/usr/local/bin/perform-backup.sh"]

@@ -3,6 +3,16 @@ FROM mysql:8.3.0
 
 # Install additional required packages
 USER root
+
+RUN microdnf install -y wget && \
+    wget https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm -O /tmp/pg_repo.rpm && \
+    rpm -i /tmp/pg_repo.rpm && \
+    microdnf install -y systemd postgresql13-libs libicu && \
+    wget https://download.postgresql.org/pub/repos/yum/13/redhat/rhel-8-x86_64/postgresql13-13.3-2PGDG.rhel8.x86_64.rpm -O /tmp/pgql.rpm && \
+    rpm -i /tmp/pgql.rpm && \
+    rm -f /tmp/pg_repo.rpm /tmp/pgql.rpm && \
+    microdnf remove -y wget
+
 RUN microdnf update && \
     microdnf install -y \
     python3-pip \
@@ -12,8 +22,11 @@ RUN microdnf update && \
     gnupg \
     gzip \
     git \
-    go && \
+    go \
     pip3 install --upgrade awscli s3cmd python-magic awscli-plugin-endpoint && \
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl && \
+    rm kubectl && \
     microdnf clean all
 
 # Set Default Environment Variables
@@ -35,7 +48,7 @@ RUN git clone https://github.com/FiloSottile/age.git /tmp/age && \
 # Copy Scaleway configuration files from build context to the container
 COPY ./scaleway/config /root/.aws/config
 
-# Assume you have a backup script that uses mysqldump, awscli, etc.
+# Assume you have a backup script that uses mysqldump, pg_dump, awscli, etc.
 COPY resources/perform-backup.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/perform-backup.sh
 

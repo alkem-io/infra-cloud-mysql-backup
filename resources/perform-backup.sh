@@ -7,7 +7,7 @@ has_failed=false
 aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID" 
 aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY" 
 aws configure set region "$AWS_REGION" 
-aws configure set output "json" 
+aws configure list 
 
 # Set the BACKUP_CREATE_DATABASE_STATEMENT variable
 if [ "$BACKUP_CREATE_DATABASE_STATEMENT" = "true" ]; then
@@ -70,8 +70,13 @@ if [ "$has_failed" = false ]; then
                 DUMP="$DUMP".age
             fi
 
-            # Perform the upload to Scaleway S3-compatible storage using the Scaleway profile
-            if awsoutput=$(aws --profile scaleway --endpoint-url=$AWS_S3_ENDPOINT s3 cp /tmp/$DUMP s3://$SCALEWAY_BUCKET_NAME$SCALEWAY_BUCKET_BACKUP_PATH/$DUMP 2>&1); then
+            # If the AWS_S3_ENDPOINT variable isn't empty, then populate the --endpoint-url parameter to use a custom S3 compatable endpoint
+            if [ ! -z "$AWS_S3_ENDPOINT" ]; then
+                ENDPOINT="--endpoint-url=$AWS_S3_ENDPOINT"
+            fi
+
+            # Perform the upload to S3. Put the output to a variable. If successful, print an entry to the console and the log. If unsuccessful, set has_failed to true and print an entry to the console and the log
+            if awsoutput=$(aws $ENDPOINT s3 cp /tmp/$DUMP s3://$AWS_BUCKET_NAME$AWS_BUCKET_BACKUP_PATH/$DUMP 2>&1); then
                 echo -e "Database backup successfully uploaded for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')."
             else
                 echo -e "Database backup failed to upload for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $awsoutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
