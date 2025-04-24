@@ -82,7 +82,13 @@ if [ "$has_failed" = false ]; then
                 echo -e "Database backup failed to upload for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $awsoutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
                 has_failed=true
             fi
-            rm /tmp/"$DUMP"
+            # Check if the uploaded file is empty before removal
+            if [ -f "/tmp/$DUMP" ] && [ "$(stat -c%s "/tmp/$DUMP")" -eq 0 ]; then
+                printf '%s\n' "Uploaded file is empty for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')." \
+                    | tee -a /tmp/kubernetes-cloud-mysql-backup.log
+                has_failed=true
+            fi
+            rm "/tmp/$DUMP"
 
         else
             echo -e "Database backup FAILED for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $sqloutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
