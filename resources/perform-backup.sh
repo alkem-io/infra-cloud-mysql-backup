@@ -84,6 +84,12 @@ if [ "$has_failed" = false ]; then
             fi
             rm /tmp/"$DUMP"
 
+            # Check if the uploaded file is empty and set has_failed to true if it is
+            if [ $(stat -c%s "/tmp/$DUMP") -eq 0 ]; then
+            echo -e "Uploaded file is empty for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S')." | tee -a /tmp/kubernetes-cloud-mysql-backup.log
+            has_failed=true
+            fi
+
         else
             echo -e "Database backup FAILED for $CURRENT_DATABASE at $(date +'%d-%m-%Y %H:%M:%S'). Error: $sqloutput" | tee -a /tmp/kubernetes-cloud-mysql-backup.log
             has_failed=true
