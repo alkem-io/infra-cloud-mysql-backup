@@ -1,5 +1,5 @@
 # Set the base image to Postgres 12
-FROM postgres:12
+FROM postgres:17.5
 
 # Switch to root user to install packages
 USER root
