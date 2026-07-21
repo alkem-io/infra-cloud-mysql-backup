@@ -20,13 +20,13 @@ jobs:
           echo "::set-output name=PRSHA::$PRSHA"
       -
         name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
         with:
           repository: ${{ steps.get-pr-info.outputs.PRHEAD }}
           ref: ${{ steps.get-pr-info.outputs.PRSHA }}
       -
         name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: maynard-io-public
           service_account_key: ${{ secrets.GCP_SA }}
